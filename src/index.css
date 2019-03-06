@@ -12,3 +12,39 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, "Courier New",
     monospace;
 }
+.logo {
+  background-image: url("./Assets/images/favicon.png");
+  background-size: 100%;
+  width: 30px;
+  background-repeat: no-repeat;
+
+  background-position: center;
+  margin: 0 auto;
+  height: 40px;
+  padding-top: 70px;
+}
+.delete-icon {
+  font-size: 20px;
+}
+.delete-icon:hover {
+  color: red;
+}
+.edit-icon {
+  padding-left: 20px;
+  font-size: 20px;
+}
+.edit-icon:hover {
+  color: green;
+}
+.packages {
+  margin-top: 100px;
+}
+.table-layout .ant-card-body {
+  padding: 0px !important;
+}
+.ant-table-pagination.ant-pagination {
+  display: none;
+}
+.hi {
+  display: none;
+}
