@@ -1,6 +1,7 @@
 import React, { Component, ReactPropTypes } from "react";
 import logo from "./logo.svg";
 import "./App.css";
+import CreateComponent from "./Pages/AddComponent";
 import Layouts from "./components/Layout";
 import {
   BrowserRouter as Router,
@@ -29,24 +30,10 @@ class App extends Component {
 
     this.state = {
       packages: [],
-      components: [
-        {
-          id: 1,
-          name: "This Component Belongs to Package React Native",
-          package: "slJv9RuQlfFbO1x2Pk5u"
-        },
-        {
-          id: 2,
-          name: "belongs to package Flutter",
-          package: "vyMre4DiVfRqEqij9rIk"
-        },
-        {
-          id: 3,
-          name: "Belongs to Package React Native",
-          package: "slJv9RuQlfFbO1x2Pk5u"
-        }
-      ],
+      components: [],
+      componentCount: [],
       toDisplay: "Packages",
+      loading: true,
       packageName: "",
       description: "",
       showModal: false,
@@ -139,7 +126,8 @@ class App extends Component {
     });
     const packageRef = await db.collection("packages").add({
       name: this.state.packageName,
-      description: this.state.description
+      description: this.state.description,
+      count: 0
     });
     var previous = this.state.packages;
     var key = packageRef.id;
@@ -147,7 +135,8 @@ class App extends Component {
     previous.push({
       name: this.state.packageName,
       description: this.state.description,
-      id: key
+      id: key,
+      count: 0
     });
     this.setState({
       packageName: "",
@@ -164,6 +153,9 @@ class App extends Component {
   showComponents = () => {
     var self = this;
     var db = firebase.firestore();
+    this.setState({
+      loading: true
+    });
     db.collection("components")
       .get()
       .then(function(querySnapshot) {
@@ -176,7 +168,8 @@ class App extends Component {
             id: doc.id
           });
           self.setState({
-            components: previous
+            components: previous,
+            loading: false
           });
         });
       })
@@ -186,7 +179,6 @@ class App extends Component {
   };
 
   addComponent = async inPackage => {
-    console.log("jab aaay tha", this.state.components);
     const db = firebase.firestore();
     db.settings({
       timestampsInSnapshots: true
@@ -210,6 +202,28 @@ class App extends Component {
     //   components: previous
     // });
     console.log("I did state as", this.state.components);
+    console.log("Component Mounted");
+    var self = this;
+
+    db.collection("packages")
+      .get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+          // doc.data() is never undefined for query doc snapshots
+          // console.log(doc.id, " => ", doc.data());
+          if (doc.id == inPackage) {
+            var count = parseInt(doc.data().count, 10);
+            db.collection("packages")
+              .doc(doc.id)
+              .update({
+                count: count + 1
+              });
+          }
+        });
+      })
+      .catch(function(error) {
+        console.log("Error getting documents: ", error);
+      });
   };
   editPackage = id => {
     var self = this;
@@ -288,6 +302,9 @@ class App extends Component {
     console.log("Component Mounted");
     var self = this;
     var db = firebase.firestore();
+    this.setState({
+      loading: true
+    });
     db.collection("packages")
       .get()
       .then(function(querySnapshot) {
@@ -301,7 +318,8 @@ class App extends Component {
             id: doc.id
           });
           self.setState({
-            packages: previous
+            packages: previous,
+            loading: false
           });
         });
       })
@@ -331,6 +349,7 @@ class App extends Component {
                     handleDelete={this.handleDelete}
                     toggleShowModal={this.toggleShowModal}
                     showModal={this.state.showModal}
+                    loading={this.state.loading}
                   />
                 }
                 displayed="Packages"
@@ -397,6 +416,7 @@ class App extends Component {
                     showComponents={this.showComponents}
                     clearComponents={this.clearComponents}
                     deleteComponent={this.deleteComponent}
+                    loading={this.state.loading}
                     {...props}
                   />
                 }
@@ -426,7 +446,7 @@ class App extends Component {
             render={props => (
               <Index
                 display={
-                  <AddComponent
+                  <CreateComponent
                     components={this.state.components}
                     {...props}
                     addComponent={this.addComponent}

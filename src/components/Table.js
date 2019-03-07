@@ -5,12 +5,14 @@ import "../index.css";
 import { Table, Divider, Tag, Icon, Card, Button, Tooltip, Modal } from "antd";
 import { Link } from "react-router-dom";
 import firebase from "../firebase";
+import Spins from "../Pages/Spin";
 class Tablet extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       selectedRow: 0,
-      showDeleteModal: false
+      showDeleteModal: false,
+      initLoading: true
     };
 
     this.handleCancel = this.handleCancel.bind(this);
@@ -21,7 +23,16 @@ class Tablet extends React.Component {
     console.log("in handle cancel");
     this.props.toggleShowModal(false);
   };
-  componentWillMount() {}
+  componentWillMount() {
+    this.setState({
+      isLoading: true
+    });
+  }
+  componentDidMount() {
+    this.setState({
+      isLoading: false
+    });
+  }
 
   selectRow = record => {
     this.setState({
@@ -109,10 +120,14 @@ class Tablet extends React.Component {
             </Link>
           </div>
         </div>
+        {!this.props.loading ? (
+          <Card style={{ padding: "0px" }}>
+            <Table columns={columns} dataSource={this.props.packages} />
+          </Card>
+        ) : (
+          <Spins />
+        )}
 
-        <Card style={{ padding: "0px" }}>
-          <Table columns={columns} dataSource={this.props.packages} />
-        </Card>
         <Link
           to="/"
           onOk={() => this.props.handleDelete(this.state.selectedRow)}

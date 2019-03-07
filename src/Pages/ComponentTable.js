@@ -5,6 +5,7 @@ import "../index.css";
 import { Table, Divider, Tag, Icon, Card, Button, Tooltip, Modal } from "antd";
 import { Link } from "react-router-dom";
 import firebase from "../firebase";
+import Spins from "../Pages/Spin";
 class ComponentTable extends React.Component {
   constructor(props) {
     super(props);
@@ -120,16 +121,19 @@ class ComponentTable extends React.Component {
             </Link>
           </div>
         </div>
-
-        <Card style={{ padding: "0px" }}>
-          <Table
-            columns={columns}
-            dataSource={this.props.components}
-            rowClassName={(record, index) =>
-              record.package == this.props.match.params.id ? null : "hi"
-            }
-          />
-        </Card>
+        {!this.props.loading ? (
+          <Card style={{ padding: "0px" }}>
+            <Table
+              columns={columns}
+              dataSource={this.props.components}
+              rowClassName={(record, index) =>
+                record.package == this.props.match.params.id ? null : "hi"
+              }
+            />
+          </Card>
+        ) : (
+          <Spins />
+        )}
         <Modal
           title="Basic Modal"
           visible={this.state.showDeleteModal}
