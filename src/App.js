@@ -22,6 +22,7 @@ import ComponentTable from "./Pages/ComponentTable";
 import EditComponent from "./Pages/EditComponent";
 import AddComponent from "./Pages/AddComponent";
 import ComponentDescription from "./Pages/ComponentDescription";
+import AddComponentdemo from "./Pages/AddComponentdemo";
 
 class App extends Component {
   constructor() {
@@ -38,9 +39,14 @@ class App extends Component {
       description: "",
       showModal: false,
       componentName: "",
-      componentDescription: ""
+      componentDescription: "",
+      componentStyles: [],
+      componentDefaultStates: [],
+      componentClassMethods: [],
+      componentExtends: "",
+      componentAccepts: ""
     };
-    this.changeMode = this.changeMode.bind(this);
+
     this.updatePackageName = this.updatePackageName.bind(this);
     this.updateDescription = this.updateDescription.bind(this);
     this.addPackage = this.addPackage.bind(this);
@@ -48,12 +54,13 @@ class App extends Component {
     this.toggleShowModal = this.toggleShowModal.bind(this);
     this.editPackage = this.editPackage.bind(this);
     this.addComponent = this.addComponent.bind(this);
-    this.updateComponentName = this.updateComponentName.bind(this);
-    this.updateComponentDescription = this.updateComponentDescription.bind(
-      this
-    );
+
     this.showComponents = this.showComponents.bind(this);
     this.clearComponents = this.clearComponents.bind(this);
+    this.updateStyleArray = this.updateStyleArray.bind(this);
+    this.updateClassMethodArray = this.updateClassMethodArray.bind(this);
+    this.updateDefaultStateArray = this.updateDefaultStateArray.bind(this);
+    this.updateValues = this.updateValues.bind(this);
   }
   changeMode(toShow) {
     this.setState({
@@ -71,15 +78,70 @@ class App extends Component {
       description: describe
     });
   }
-  updateComponentName(input) {
-    this.setState({
-      componentName: input
-    });
+
+  updateValues(name, description, extend, accepts, code, packages) {
+    console.log("Updating values and got ", name, description, accepts);
+    this.setState(
+      {
+        componentName: name,
+        componentDescription: description,
+        componentExtends: extend,
+        componentAccepts: accepts,
+        componentCode: code
+      },
+      () => {
+        this.addComponent(packages);
+      }
+    );
+    console.log("Called the method dear");
   }
-  updateComponentDescription(describe) {
+  updateStyleArray(styleKeys, styleValues, packages) {
+    console.log("In style array");
+    var previous = this.state.componentStyles;
+    styleKeys != null &&
+      styleKeys.map((styler, index) => {
+        var currentValue = styleValues[index];
+        previous.push({
+          [styler]: { currentValue }
+        });
+      });
     this.setState({
-      componentDescription: describe
+      componentStyles: previous
     });
+
+    console.log("Immediate After", this.state.componentStyles);
+  }
+  updateDefaultStateArray(stateKeys, stateValues) {
+    console.log("In Defaultstate array");
+    var previous = this.state.componentDefaultStates;
+    console.log("Previous is", previous);
+    stateKeys != null &&
+      stateKeys.map((styler, index) => {
+        var currentValue = stateValues[index];
+        previous.push({
+          [styler]: currentValue
+        });
+      });
+    console.log("Beech me aaya");
+    this.setState({
+      componentDefaultStates: previous
+    });
+    console.log("Exit from default state");
+  }
+  updateClassMethodArray(methodKeys, methodValues) {
+    console.log("In Class Method Array");
+    var previous = this.state.componentClassMethods;
+    methodKeys != null &&
+      methodKeys.map((styler, index) => {
+        var currentValue = methodValues[index];
+        previous.push({
+          [styler]: currentValue
+        });
+      });
+    this.setState({
+      componentClassMethods: previous
+    });
+    console.log("Exit from Class methods");
   }
   handleDelete = id => {
     var previous = this.state.packages;
@@ -179,6 +241,9 @@ class App extends Component {
   };
 
   addComponent = async inPackage => {
+    console.log("In add Component");
+    console.log("values are", this.state);
+
     const db = firebase.firestore();
     db.settings({
       timestampsInSnapshots: true
@@ -186,24 +251,24 @@ class App extends Component {
     const packageRef = await db.collection("components").add({
       name: this.state.componentName,
       description: this.state.componentDescription,
-      package: inPackage
+      package: inPackage,
+      styles: this.state.componentStyles,
+      defaultState: this.state.componentDefaultStates,
+      classMethods: this.state.componentClassMethods,
+      codeTemplate: this.state.componentCode,
+      extends: this.state.componentExtends,
+      accepts: this.state.componentAccepts
     });
-    // var previous = this.state.components;
-    // previous.push({
-    //   name: this.state.componentName,
-    //   description: this.state.componentDescription,
-    //   package: inPackage,
-    //   id: packageRef.id
-    // });
 
-    // this.setState({
-    //   componentName: "",
-    //   componentDescription: "",
-    //   components: previous
-    // });
     console.log("I did state as", this.state.components);
     console.log("Component Mounted");
     var self = this;
+    this.setState({
+      componentDefaultStates: [],
+      componentClassMethods: [],
+      componentStyles: [],
+      codeTemplate: ""
+    });
 
     db.collection("packages")
       .get()
@@ -330,6 +395,7 @@ class App extends Component {
 
   render() {
     var self = this;
+    console.log("Style array is", this.state.componentStyles);
 
     return (
       <Router>
@@ -429,11 +495,17 @@ class App extends Component {
             render={props => (
               <Index
                 display={
-                  <EditComponent
+                  <AddComponent
                     components={this.state.components}
-                    updateComponentName={this.updateComponentName}
-                    updateComponentDescription={this.updateDescription}
-                    editComponent={this.editComponent}
+                    showComponents={this.showComponents}
+                    clearComponents={this.clearComponents}
+                    deleteComponent={this.deleteComponent}
+                    loading={this.state.loading}
+                    mode="edit"
+                    updateStyleArray={this.state.updateStyleArray}
+                    updateClassMethodArray={this.updateClassMethodArray}
+                    updateDefaultStateArray={this.updateDefaultStateArray}
+                    updateValues={this.updateValues}
                     {...props}
                   />
                 }
@@ -441,6 +513,7 @@ class App extends Component {
               />
             )}
           />
+
           <Route
             path="/:id/addComponent"
             render={props => (
@@ -449,9 +522,12 @@ class App extends Component {
                   <CreateComponent
                     components={this.state.components}
                     {...props}
+                    mode="add"
                     addComponent={this.addComponent}
-                    updateComponentName={this.updateComponentName}
-                    updateComponentDescription={this.updateComponentDescription}
+                    updateValues={this.updateValues}
+                    updateStyleArray={this.updateStyleArray}
+                    updateClassMethodArray={this.updateClassMethodArray}
+                    updateDefaultStateArray={this.updateDefaultStateArray}
                   />
                 }
                 displayed="Components"
