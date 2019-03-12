@@ -12,26 +12,57 @@ class Tablet extends React.Component {
     this.state = {
       selectedRow: 0,
       showDeleteModal: false,
-      initLoading: true
+
+      packages: [],
+      isLoading: true
     };
 
     this.handleCancel = this.handleCancel.bind(this);
     this.selectRow = this.selectRow.bind(this);
     this.handleDelete = this.handleDelete.bind(this);
+    this.handleOk = this.handleOk.bind(this);
   }
   handleCancel = () => {
-    console.log("in handle cancel");
-    this.props.toggleShowModal(false);
-  };
-  componentWillMount() {
     this.setState({
-      isLoading: true
+      showDeleteModal: false
+    });
+  };
+
+  handleOk(row) {
+    console.log("Calling Handle Deletes");
+    this.props.handleDelete(this.state.selectedRow);
+
+    this.setState({
+      showDeleteModal: false
     });
   }
   componentDidMount() {
-    this.setState({
-      isLoading: false
-    });
+    var self = this;
+
+    firebase
+      .firestore()
+      .collection("packages")
+      .get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+          // doc.data() is never undefined for query doc snapshots
+          // console.log(doc.id, " => ", doc.data());
+          var previous = self.state.packages;
+          previous.push({
+            name: doc.data().name,
+            description: doc.data().description,
+            id: doc.id,
+            count: doc.data().count
+          });
+          self.setState({
+            packages: previous,
+            isLoading: false
+          });
+        });
+      })
+      .catch(function(error) {
+        console.log("Error getting documents: ", error);
+      });
   }
 
   selectRow = record => {
@@ -40,8 +71,8 @@ class Tablet extends React.Component {
     });
   };
   handleDelete = id => {
-    this.props.toggleShowModal(true);
     this.setState({
+      showDeleteModal: true,
       selectedRow: id
     });
   };
@@ -66,8 +97,8 @@ class Tablet extends React.Component {
       },
       {
         title: "Number of Components",
-        dataIndex: "components",
-        key: "components"
+        dataIndex: "count",
+        key: "count"
       },
 
       {
@@ -128,19 +159,14 @@ class Tablet extends React.Component {
           <Spins />
         )}
 
-        <Link
-          to="/"
-          onOk={() => this.props.handleDelete(this.state.selectedRow)}
+        <Modal
+          title="Basic Modal"
+          visible={this.state.showDeleteModal}
+          onOk={() => this.handleOk(this.state.selectedRow)}
+          onCancel={this.handleCancel}
         >
-          <Modal
-            title="Basic Modal"
-            visible={this.props.showModal}
-            onOk={() => this.props.handleDelete(this.state.selectedRow)}
-            onCancel={this.handleCancel}
-          >
-            <p>Are you sure You want to delete the package</p>
-          </Modal>
-        </Link>
+          <p>Are you sure You want to delete the package</p>
+        </Modal>
       </div>
     );
   }

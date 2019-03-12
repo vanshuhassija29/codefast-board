@@ -14,18 +14,6 @@ class ComponentTable extends React.Component {
       showDeleteModal: false
     };
 
-    // firebase
-    //   .firestore()
-    //   .collection("packages")
-    //   .get()
-    //   .then(querySnapshot => {
-    //     querySnapshot.forEach(doc => {
-    //       this.state.packages.push({
-    //         name: doc.data().name,
-    //         description: doc.data().description
-    //       });
-    //     });
-    //   });
     this.handleOk = this.handleOk.bind(this);
     this.handleCancel = this.handleCancel.bind(this);
 
@@ -105,11 +93,11 @@ class ComponentTable extends React.Component {
             <h3 style={{ paddingLeft: 10, width: 200 }}>Components List</h3>
           </div>
 
-          <div style={{ marginLeft: 820 }}>
+          <div style={{ marginLeft: 858 }}>
             <Link to={`/${this.props.match.params.id}/details`}>
               <Button
                 type="primary"
-                style={{ marginRight: 50, marginBottom: 20 }}
+                style={{ marginRight: 15, marginBottom: 20 }}
               >
                 Back
               </Button>

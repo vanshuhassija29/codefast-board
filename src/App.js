@@ -44,7 +44,8 @@ class App extends Component {
       componentDefaultStates: [],
       componentClassMethods: [],
       componentExtends: "",
-      componentAccepts: ""
+      componentAccepts: "",
+      mode: ""
     };
 
     this.updatePackageName = this.updatePackageName.bind(this);
@@ -54,6 +55,7 @@ class App extends Component {
     this.toggleShowModal = this.toggleShowModal.bind(this);
     this.editPackage = this.editPackage.bind(this);
     this.addComponent = this.addComponent.bind(this);
+    this.changeMode = this.changeMode.bind(this);
 
     this.showComponents = this.showComponents.bind(this);
     this.clearComponents = this.clearComponents.bind(this);
@@ -79,65 +81,127 @@ class App extends Component {
     });
   }
 
-  updateValues(name, description, extend, accepts, code, packages) {
+  updateValues(
+    name,
+    description,
+    extend,
+    accepts,
+    code,
+    packages,
+    mode,
+    componentId
+  ) {
     console.log("Updating values and got ", name, description, accepts);
+    console.log("in update Values mode is", mode);
+    console.log("Will be sending id as", componentId);
     this.setState(
       {
         componentName: name,
         componentDescription: description,
         componentExtends: extend,
         componentAccepts: accepts,
-        componentCode: code
+        componentCode: code,
+        mode: mode
       },
+
       () => {
-        this.addComponent(packages);
+        if (mode == "edit") {
+          this.editComponent(packages, componentId);
+        } else {
+          this.addComponent(packages);
+        }
       }
     );
-    console.log("Called the method dear");
+    console.log("Called the method ");
   }
-  updateStyleArray(styleKeys, styleValues, packages) {
+  updateStyleArray(styleKeys, styleValues, modes) {
+    console.log("In update styles");
     console.log("In style array");
     var previous = this.state.componentStyles;
-    styleKeys != null &&
-      styleKeys.map((styler, index) => {
-        var currentValue = styleValues[index];
-        previous.push({
-          [styler]: { currentValue }
+    console.log("Yhan tak to aagya");
+    console.log("Mode is", modes);
+    console.log("And in mode edit i got styleKeys like", styleKeys);
+
+    if (styleKeys != null) {
+      if (modes != "edit") {
+        console.log("Entered if");
+        styleKeys.map((styler, index) => {
+          console.log("I am in map function");
+          var currentValue = styleValues[index];
+          previous.push({
+            [styler]: currentValue
+          });
         });
-      });
+      } else {
+        console.log("Object.Keys is", Object.values(styleKeys));
+
+        Object.values(styleKeys).map((styler, index) => {
+          console.log("I am in map function");
+          var currentValue = Object.values(styleValues)[index];
+          previous.push({
+            [styler]: currentValue
+          });
+        });
+      }
+    }
     this.setState({
       componentStyles: previous
     });
 
     console.log("Immediate After", this.state.componentStyles);
   }
-  updateDefaultStateArray(stateKeys, stateValues) {
+  updateDefaultStateArray(stateKeys, stateValues, modes) {
     console.log("In Defaultstate array");
     var previous = this.state.componentDefaultStates;
     console.log("Previous is", previous);
-    stateKeys != null &&
-      stateKeys.map((styler, index) => {
-        var currentValue = stateValues[index];
-        previous.push({
-          [styler]: currentValue
+    console.log("Mode is", modes);
+
+    if (stateKeys != null) {
+      if (modes != "edit") {
+        console.log("Entered if");
+        stateKeys.map((styler, index) => {
+          var currentValue = stateValues[index];
+          previous.push({
+            [styler]: currentValue
+          });
         });
-      });
+      } else {
+        console.log("Entered  else");
+        Object.values(stateKeys).map((styler, index) => {
+          var currentValue = Object.values(stateValues)[index];
+          previous.push({
+            [styler]: currentValue
+          });
+        });
+      }
+    }
     console.log("Beech me aaya");
     this.setState({
       componentDefaultStates: previous
     });
     console.log("Exit from default state");
   }
-  updateClassMethodArray(methodKeys, methodValues) {
-    console.log("In Class Method Array");
+  updateClassMethodArray(methodKeys, methodValues, modes) {
     var previous = this.state.componentClassMethods;
-    methodKeys != null &&
-      methodKeys.map((styler, index) => {
-        var currentValue = methodValues[index];
-        previous.push({
-          [styler]: currentValue
+
+    if (methodKeys != null) {
+      if (modes != "edit") {
+        methodKeys.map((styler, index) => {
+          var currentValue = methodValues[index];
+          previous.push({
+            [styler]: currentValue
+          });
         });
-      });
+      } else {
+        Object.values(methodKeys).map((styler, index) => {
+          var currentValue = Object.values(methodValues)[index];
+          previous.push({
+            [styler]: currentValue
+          });
+        });
+      }
+    }
+
     this.setState({
       componentClassMethods: previous
     });
@@ -146,30 +210,33 @@ class App extends Component {
   handleDelete = id => {
     var previous = this.state.packages;
     var todelete = this.state.packages.findIndex(i => i.id == id);
-    previous.splice(todelete, 1);
-    this.setState({
-      packages: previous
-    });
+    console.log("Index to be deleted is", todelete);
+
     firebase
       .firestore()
       .collection("packages")
       .doc(id)
       .delete();
-
+    previous.splice(todelete, 1);
+    console.log("Gonna set state");
+    this.setState({
+      packages: previous
+    });
     this.toggleShowModal(false);
   };
   deleteComponent = id => {
     var previous = this.state.components;
     var todelete = this.state.components.findIndex(i => i.id == id);
-    previous.splice(todelete, 1);
-    this.setState({
-      components: previous
-    });
+
     firebase
       .firestore()
       .collection("components")
       .doc(id)
       .delete();
+    previous.splice(todelete, 1);
+    this.setState({
+      components: previous
+    });
 
     this.toggleShowModal(false);
   };
@@ -290,16 +357,17 @@ class App extends Component {
         console.log("Error getting documents: ", error);
       });
   };
-  editPackage = id => {
+  editPackage = (id, values) => {
     var self = this;
+    console.log("Values received is:", values);
 
     const db = firebase.firestore();
 
     db.collection("packages")
       .doc(id)
       .update({
-        name: this.state.packageName,
-        description: this.state.description
+        name: values.name,
+        description: values.description
       });
 
     var previous = this.state.packages;
@@ -308,8 +376,8 @@ class App extends Component {
         return packages.id == id;
       })
       .map(pack => {
-        pack.name = this.state.packageName;
-        pack.description = this.state.description;
+        pack.name = values.name;
+        pack.description = values.description;
       });
 
     // var previous = this.state.packages
@@ -326,51 +394,59 @@ class App extends Component {
       componentDescription: ""
     });
   };
-  editComponent = id => {
-    var self = this;
-
+  editComponent = async (inPackage, id) => {
+    console.log("Id received in editComponent", id);
+    console.log("State ");
     const db = firebase.firestore();
 
-    db.collection("components")
+    const packageRef = db
+      .collection("components")
       .doc(id)
       .update({
         name: this.state.componentName,
-        description: this.state.componentDescription
+        description: this.state.componentDescription,
+        package: inPackage,
+        styles: this.state.componentStyles,
+        defaultState: this.state.componentDefaultStates,
+        classMethods: this.state.componentClassMethods,
+        codeTemplate: this.state.componentCode,
+        extends: this.state.componentExtends,
+        accepts: this.state.componentAccepts
       });
 
-    var previous = this.state.components;
-    previous
-      .filter(component => {
-        return component.id == id;
-      })
-      .map(comp => {
-        comp.name = this.state.componentName;
-        comp.description = this.state.componentDescription;
-      });
-
-    // var previous = this.state.packages
-    //   .filter(packages => {
-    //     packages.id = id;
-    //   })
-    //   .map(item => {
-    //     item.name = this.state.packageName;
-    //     item.description = this.state.description;
-    //   });
+    console.log("I did state as", this.state.components);
+    console.log("Component Mounted");
+    var self = this;
     this.setState({
-      components: previous,
-      name: "",
-      description: ""
+      componentDefaultStates: [],
+      componentClassMethods: [],
+      componentStyles: [],
+      codeTemplate: ""
     });
+
+    db.collection("packages")
+      .get()
+      .then(function(querySnapshot) {
+        querySnapshot.forEach(function(doc) {
+          // doc.data() is never undefined for query doc snapshots
+          // console.log(doc.id, " => ", doc.data());
+        });
+      })
+      .catch(function(error) {
+        console.log("Error getting documents: ", error);
+      });
+    console.log("Out of editComponent");
   };
 
-  componentDidMount() {
+  async componentDidMount() {
     console.log("Component Mounted");
     var self = this;
     var db = firebase.firestore();
     this.setState({
       loading: true
     });
-    db.collection("packages")
+    const querySnapshot = await db
+      .collection("packages")
       .get()
       .then(function(querySnapshot) {
         querySnapshot.forEach(function(doc) {
@@ -380,22 +456,28 @@ class App extends Component {
           previous.push({
             name: doc.data().name,
             description: doc.data().description,
-            id: doc.id
+            id: doc.id,
+            count: doc.data().count
           });
           self.setState({
             packages: previous,
             loading: false
           });
         });
+        self.setState({
+          loading: false
+        });
       })
       .catch(function(error) {
         console.log("Error getting documents: ", error);
+        self.setState({
+          loading: false
+        });
       });
   }
 
   render() {
     var self = this;
-    console.log("Style array is", this.state.componentStyles);
 
     return (
       <Router>
@@ -502,7 +584,7 @@ class App extends Component {
                     deleteComponent={this.deleteComponent}
                     loading={this.state.loading}
                     mode="edit"
-                    updateStyleArray={this.state.updateStyleArray}
+                    updateStyleArray={this.updateStyleArray}
                     updateClassMethodArray={this.updateClassMethodArray}
                     updateDefaultStateArray={this.updateDefaultStateArray}
                     updateValues={this.updateValues}
@@ -539,9 +621,10 @@ class App extends Component {
             render={props => (
               <Index
                 display={
-                  <ComponentDescription
+                  <AddComponent
                     components={this.state.components}
                     {...props}
+                    mode="details"
                   />
                 }
                 displayed="Components"

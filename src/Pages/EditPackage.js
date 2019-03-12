@@ -23,10 +23,12 @@ const { Option } = Select;
 
 class EditPackage extends React.Component {
   handleSubmit = e => {
-    e.preventDefault();
+    // e.preventDefault();
     this.props.form.validateFields((err, values) => {
       if (!err) {
         console.log("Received values of form: ", values);
+        this.props.editPackage(this.props.match.params.id, values);
+        this.props.history.push("/");
       }
     });
   };
@@ -37,10 +39,6 @@ class EditPackage extends React.Component {
       return e;
     }
     return e && e.fileList;
-  };
-  editPackage = e => {
-    this.props.editPackage(this.props.match.params.id);
-    this.props.history.push("/");
   };
 
   render() {
@@ -79,17 +77,11 @@ class EditPackage extends React.Component {
                   wrapperCol={{ span: 12 }}
                 >
                   {getFieldDecorator("name", {
+                    initialValue: editPackage.name,
                     rules: [
                       { required: true, message: "Please add a Package name" }
                     ]
-                  })(
-                    <Input
-                      placeholder={editPackage.name}
-                      onChange={e => {
-                        this.props.updatePackageName(e.target.value);
-                      }}
-                    />
-                  )}
+                  })(<Input />)}
                 </Form.Item>
                 <Form.Item
                   label="Description"
@@ -97,19 +89,14 @@ class EditPackage extends React.Component {
                   wrapperCol={{ span: 12 }}
                 >
                   {getFieldDecorator("description", {
+                    initialValue: editPackage.description,
                     rules: [
                       {
                         required: true,
                         message: "Please describe the package briefly"
                       }
                     ]
-                  })(
-                    <Input
-                      onChange={e => {
-                        this.props.updateDescription(e.target.value);
-                      }}
-                    />
-                  )}
+                  })(<Input />)}
                 </Form.Item>
                 {/* <Form.Item
                   label="Upload Logo"
@@ -132,7 +119,7 @@ class EditPackage extends React.Component {
                   <Button
                     type="primary"
                     onClick={() => {
-                      this.editPackage(this.props.match.params.id);
+                      this.handleSubmit(this.props.match.params.id);
                     }}
                   >
                     Submit
